@@ -77,9 +77,12 @@ int main(int argc, const char ** argv)
 		/* We're in the child */
 		/* Close write end, use read and as stdin */
 		close(pipe_ends[1]);
-		dup2(pipe_ends[0], fileno(stdin));
+		if (dup2(pipe_ends[0], fileno(stdin)) < 0) {
+			std::cerr << "There was an error redirecting stdin." << std::endl;
+			exit(1);
+		}
 		/* exec nsupdate */
-		execl(nsupdate.c_str(), nsupdate.c_str(), "-k", keyfile.c_str(), NULL);
+		execl(nsupdate.c_str(), nsupdate.c_str(), "-k", keyfile.c_str(), (char *)NULL);
 		/* There was an error */
 		std::cerr << "There was an error executing nsupdate." << std::endl;
 		exit(1);
