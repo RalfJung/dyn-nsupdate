@@ -14,10 +14,10 @@ if "user" not in form or "password" not in form or "domain" not in form or "ip" 
     print "Mandatory argument missing: You must supply all of 'user', 'password', 'domain', 'ip'"
     sys.exit()
 
-ip = form["ip"].value
-domain = form["domain"].value
 user = form["user"].value
 password = form["password"].value
+domain = form["domain"].value
+ip = form["ip"].value
 
 # run update program
 p = subprocess.Popen(["/var/lib/named/dyn-nsupdate", user, password, domain, ip], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
