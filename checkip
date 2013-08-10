@@ -1,0 +1,9 @@
+#!/usr/bin/python
+import os
+
+# print headers
+print "Content-Type: text/plain"
+print ""
+
+# print content
+print os.environ["REMOTE_ADDR"]
