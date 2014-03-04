@@ -7,32 +7,23 @@ print "Content-Type: text/plain"
 print ""
 
 # get input
-if "user" not in form or "password" not in form or "domain" not in form or "ip" not in form:
-    print "Mandatory argument missing: You must supply all of 'user', 'password', 'domain', 'ip'"
+if "password" not in form or "domain" not in form or "ip" not in form:
+    print "Mandatory argument missing: You must supply all of 'password', 'domain', 'ip'"
     sys.exit()
 
 ip = form["ip"].value
 domain = form["domain"].value
-user = form["user"].value
 password = form["password"].value
 
 # run update program
-p = subprocess.Popen(["/var/lib/named/dyn-nsupdate", user, password, domain, ip], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+p = subprocess.Popen(["/var/lib/named/dyn-nsupdate", domain, password, ip], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 (stdout, stderr) = p.communicate()
-if stdout:
-	print "Unexpected stdout from dyn-nsupdate:"
-	print stdout
-	sys.exit()
 
 # check what it did
-if p.returncode == 1:
+if p.returncode or stderr or stdout:
 	# error :/
-	print "There was an error while updating the DNS:"
-	print stderr
+	print "There was an error while updating the DNS: Return code %d" % p.returncode
+	if stdout: print stdout
+	if stderr: print stderr
 else:
-	# all right!
-	if p.returncode or stderr:
-		print "Unexpected stderr from dyn-nsupdate:"
-		print stderr
-		sys.exit()
 	print "good",ip

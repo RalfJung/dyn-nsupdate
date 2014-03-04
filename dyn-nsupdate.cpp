@@ -9,6 +9,7 @@
 #include <boost/iostreams/stream.hpp>
 
 using namespace boost;
+typedef property_tree::ptree::path_type path;
 
 static void write(int fd, const char *str)
 {
@@ -23,26 +24,31 @@ static void write(int fd, const char *str)
 int main(int argc, const char ** argv)
 {
 	static const regex regex_ip("\\d{1,3}.\\d{1,3}.\\d{1,3}.\\d{1,3}");
-	static const regex regex_user("[a-zA-Z]+");
+	static const regex regex_password("[a-zA-Z0-9.:;,_-]+");
+	static const regex regex_domain("[a-zA-Z0-9.]+");
 	
 	
-	if (argc != 5) {
-		std::cerr << "Usage: " << argv[0] << " <username> <password> <domain> <IP address>" << std::endl;
+	if (argc != 4) {
+		std::cerr << "Usage: " << argv[0] << " <domain> <password> <IP address>" << std::endl;
 		return 1;
 	}
 	
-	/* Obtain and validate inpit */
-	std::string user = argv[1];
+	/* Obtain input */
+	std::string domain = argv[1];
 	std::string password = argv[2];
-	std::string domain = argv[3];
-	std::string ip = argv[4];
+	std::string ip = argv[3];
 	
+	/* Validate input */
 	if (!regex_match(ip, regex_ip)) {
 		std::cerr << "Invalid IP address " << ip << "." << std::endl;
 		exit(1);
 	}
-	if (!regex_match(user, regex_user)) {
-		std::cerr << "Invalid username " << user << "." << std::endl;
+	if (!regex_match(domain, regex_domain)) {
+		std::cerr << "Invalid domain " << domain << "." << std::endl;
+		exit(1);
+	}
+	if (!regex_match(password, regex_password)) {
+		std::cerr << "Invalid password " << password << "." << std::endl;
 		exit(1);
 	}
 	
@@ -51,14 +57,10 @@ int main(int argc, const char ** argv)
 	property_tree::ini_parser::read_ini(CONFIG_FILE, config);
 	std::string nsupdate = config.get<std::string>("nsupdate");
 	
-	/* Check username, password, domain */
-	optional<std::string> correct_password = config.get_optional<std::string>(user+".password");
+	/* Given the domain, check whether the password matches */
+	optional<std::string> correct_password = config.get_optional<std::string>(path(domain+"/password", '/'));
 	if (!correct_password || *correct_password != password) {
-		std::cerr << "Username or password incorrect." << std::endl;
-		exit(1);
-	}
-	if (config.get<std::string>(user+".domain") != domain) {
-		std::cerr << "Domain incorrect." << std::endl;
+		std::cerr << "Password incorrect." << std::endl;
 		exit(1);
 	}
 	
@@ -77,7 +79,7 @@ int main(int argc, const char ** argv)
 	}
 	if (child_pid == 0) {
 		/* We're in the child */
-		/* Close write end, use read and as stdin */
+		/* Close write end, use read end as stdin */
 		close(pipe_ends[1]);
 		if (dup2(pipe_ends[0], fileno(stdin)) < 0) {
 			std::cerr << "There was an error redirecting stdin." << std::endl;
