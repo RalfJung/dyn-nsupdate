@@ -7,10 +7,12 @@ domains = ['your.domain.ralfj.de'] # list of domains to update
 password = 'yourpassword'
 # END of configuration variables
 
+myip = urllib2.urlopen('https://'+server+'/checkip').read().strip()
+
 def update_domain(domain):
 	'''Update the given domain, using the global server, user, password. Returns True on success, False on failure.'''
+	global myip
 	# check if the domain is already mapped to our current IP
-	myip = urllib2.urlopen('https://'+server+'/checkip').read().strip()
 	domainip = socket.gethostbyname(domain)
 	if myip == domainip:
 		# nothing to do
