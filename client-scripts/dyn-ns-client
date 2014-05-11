@@ -1,13 +1,16 @@
-#!/usr/bin/python
-import urllib2, socket, urllib, sys
+#!/usr/bin/python3
+import urllib.request, socket, sys
 
 # configuration variables
 server = 'ns.ralfj.de'
-domains = ['your.domain.ralfj.de'] # list of domains to update
+domains = ['domain.dyn.ralfj.de'] # list of domains to update
 password = 'yourpassword'
 # END of configuration variables
 
-myip = urllib2.urlopen('https://'+server+'/checkip').read().strip()
+def urlopen(url):
+	return urllib.request.urlopen(url).read().decode('utf-8').strip()
+
+myip = urlopen('https://'+server+'/checkip')
 
 def update_domain(domain):
 	'''Update the given domain, using the global server, user, password. Returns True on success, False on failure.'''
@@ -19,14 +22,14 @@ def update_domain(domain):
 		return True
 
 	# we need to update the IP
-	result = urllib2.urlopen('https://'+server+'/update?password='+urllib.quote(password)+'&domain='+urllib.quote(domain)+'&ip='+urllib.quote(myip)).read().strip()
+	result = urlopen('https://'+server+'/update?password='+urllib.parse.quote(password)+'&domain='+urllib.parse.quote(domain)+'&ip='+urllib.parse.quote(myip))
 	if 'good '+myip == result: 
 		# all went all right
 		return True
 	else:
 		# Something went wrong
-		print "Unexpected answer from server",server,"while updating",domain,"to",myip
-		print result
+		print("Unexpected answer from server",server,"while updating",domain,"to",myip)
+		print(result)
 		return False
 
 exitcode = 0
