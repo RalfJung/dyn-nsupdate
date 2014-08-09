@@ -56,6 +56,7 @@ int main(int argc, const char ** argv)
 	property_tree::ptree config;
 	property_tree::ini_parser::read_ini(CONFIG_FILE, config);
 	std::string nsupdate = config.get<std::string>("nsupdate");
+	unsigned server_port = config.get<unsigned>("port", 53);
 	
 	/* Given the domain, check whether the password matches */
 	optional<std::string> correct_password = config.get_optional<std::string>(path(domain+"/password", '/'));
@@ -86,7 +87,7 @@ int main(int argc, const char ** argv)
 			exit(1);
 		}
 		/* exec nsupdate */
-		execl(nsupdate.c_str(), nsupdate.c_str(), "-l", (char *)NULL);
+		execl(nsupdate.c_str(), nsupdate.c_str(), "-p", std::to_string(server_port).c_str(), "-l", (char *)NULL);
 		/* There was an error */
 		std::cerr << "There was an error executing nsupdate." << std::endl;
 		exit(1);

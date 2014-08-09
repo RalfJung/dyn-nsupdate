@@ -6,7 +6,7 @@ INCLUDE_DIRECTORIES( ${Boost_INCLUDE_DIR} )
 
 set(DYNNSUPDATE_CONFIG_FILE "/some/config/file" CACHE FILEPATH "Choose the file dyn-nsupdate reads its configuration from (for security reasons, this is hard-coded in the binary)")
 
-set(CMAKE_CXX_FLAGS "-Wall -Wextra ${CMAKE_CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS "-Wall -Wextra ${CMAKE_CXX_FLAGS} -std=c++11")
 
 add_definitions("-DCONFIG_FILE=\"${DYNNSUPDATE_CONFIG_FILE}\"")
 
