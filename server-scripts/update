@@ -43,7 +43,7 @@ domain = form["domain"].value
 password = form["password"].value
 
 # run update program
-p = subprocess.Popen(["/var/lib/named/dyn-nsupdate", domain, password, ip], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+p = subprocess.Popen(["/var/lib/bind/dyn-nsupdate", domain, password, ip], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 (stdout, stderr) = p.communicate()
 
 # check what it did
