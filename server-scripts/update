@@ -48,9 +48,9 @@ p = subprocess.Popen(["/var/lib/named/dyn-nsupdate", domain, password, ip], stdo
 
 # check what it did
 if p.returncode or stderr or stdout:
-	# error :/
-	print "There was an error while updating the DNS: Return code %d" % p.returncode
-	if stdout: print stdout
-	if stderr: print stderr
+    # error :/
+    print "There was an error while updating the DNS: Return code %d" % p.returncode
+    if stdout: print stdout
+    if stderr: print stderr
 else:
-	print "good",ip
+    print "good",ip

@@ -35,32 +35,32 @@ password = 'yourpassword'
 # END of configuration variables
 
 def urlopen(url):
-	return urllib.request.urlopen(url).read().decode('utf-8').strip()
+    return urllib.request.urlopen(url).read().decode('utf-8').strip()
 
 myip = urlopen('https://'+server+'/checkip')
 
 def update_domain(domain):
-	'''Update the given domain, using the global server, user, password. Returns True on success, False on failure.'''
-	global myip
-	# check if the domain is already mapped to our current IP
-	domainip = socket.gethostbyname(domain)
-	if myip == domainip:
-		# nothing to do
-		return True
+    '''Update the given domain, using the global server, user, password. Returns True on success, False on failure.'''
+    global myip
+    # check if the domain is already mapped to our current IP
+    domainip = socket.gethostbyname(domain)
+    if myip == domainip:
+        # nothing to do
+        return True
 
-	# we need to update the IP
-	result = urlopen('https://'+server+'/update?password='+urllib.parse.quote(password)+'&domain='+urllib.parse.quote(domain)+'&ip='+urllib.parse.quote(myip))
-	if 'good '+myip == result: 
-		# all went all right
-		return True
-	else:
-		# Something went wrong
-		print("Unexpected answer from server",server,"while updating",domain,"to",myip)
-		print(result)
-		return False
+    # we need to update the IP
+    result = urlopen('https://'+server+'/update?password='+urllib.parse.quote(password)+'&domain='+urllib.parse.quote(domain)+'&ip='+urllib.parse.quote(myip))
+    if 'good '+myip == result: 
+        # all went all right
+        return True
+    else:
+        # Something went wrong
+        print("Unexpected answer from server",server,"while updating",domain,"to",myip)
+        print(result)
+        return False
 
 exitcode = 0
 for domain in domains:
-	if not update_domain(domain):
-		exitcode = 1
+    if not update_domain(domain):
+        exitcode = 1
 sys.exit(exitcode)
