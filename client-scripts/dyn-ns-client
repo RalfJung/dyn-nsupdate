@@ -26,31 +26,52 @@
 # of the authors and should not be interpreted as representing official policies, 
 # either expressed or implied, of the FreeBSD Project.
 
-import urllib.request, socket, sys
+import urllib.request, socket, sys, argparse
 
 # configuration variables
-server = 'ns.ralfj.de'
+server = 'ipv4.ns.ralfj.de'
 domains = ['domain.dyn.ralfj.de'] # list of domains to update
 password = 'yourpassword'
 # END of configuration variables
 
+# allow overwriting some values on the command-line
+parser = argparse.ArgumentParser(description='Update a domain managed by a dyn-nsupdate server')
+parser.add_argument("-s", "--server",
+                    dest="server", default=server,
+                    help="The dyn-nsupdate server")
+parser.add_argument("-p", "--password",
+                    dest="password", default=password,
+                    help="The password used to update the domains")
+parser.add_argument("-v", "--verbose",
+                    action="store_true", dest="verbose",
+                    help="Be more verbose")
+parser.add_argument("domains",  metavar='DOMAIN', nargs='*', default=domains,
+                    help="The domains to update")
+args = parser.parse_args()
+
 def urlopen(url):
     return urllib.request.urlopen(url).read().decode('utf-8').strip()
 
-myip = urlopen('https://'+server+'/checkip')
+myip = urlopen('https://'+args.server+'/checkip')
 
 def update_domain(domain):
     '''Update the given domain, using the global server, user, password. Returns True on success, False on failure.'''
-    global myip
+    global myip, args
     # check if the domain is already mapped to our current IP
-    domainip = socket.gethostbyname(domain)
-    if myip == domainip:
-        # nothing to do
-        return True
+    try:
+        domainip = socket.gethostbyname(domain)
+        if myip == domainip:
+            # nothing to do
+            if args.verbose:
+                print("Domain",domain,"already up-to-date, not doing anything")
+            return True
+    except socket.gaierror: # domain not found
+        pass
 
     # we need to update the IP
-    result = urlopen('https://'+server+'/update?password='+urllib.parse.quote(password)+'&domain='+urllib.parse.quote(domain)+'&ip='+urllib.parse.quote(myip))
+    result = urlopen('https://'+args.server+'/update?password='+urllib.parse.quote(args.password)+'&domain='+urllib.parse.quote(domain)+'&ip='+urllib.parse.quote(myip))
     if 'good '+myip == result: 
+        print("Successfully updated domain",domain,"to",myip)
         # all went all right
         return True
     else:
@@ -60,7 +81,7 @@ def update_domain(domain):
         return False
 
 exitcode = 0
-for domain in domains:
+for domain in args.domains:
     if not update_domain(domain):
         exitcode = 1
 sys.exit(exitcode)
