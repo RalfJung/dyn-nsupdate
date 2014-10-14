@@ -31,13 +31,14 @@
 #include <sys/wait.h>
 
 #include <boost/regex.hpp>
+#include <boost/program_options.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/iostreams/device/file_descriptor.hpp>
 #include <boost/iostreams/stream.hpp>
 
-using namespace boost;
-typedef property_tree::ptree::path_type path;
+namespace pt = boost::property_tree;
+namespace po = boost::program_options;
 
 static void write(int fd, const char *str)
 {
@@ -51,9 +52,9 @@ static void write(int fd, const char *str)
 
 int main(int argc, const char ** argv)
 {
-	static const regex regex_ip("\\d{1,3}.\\d{1,3}.\\d{1,3}.\\d{1,3}");
-	static const regex regex_password("[a-zA-Z0-9.:;,_-]+");
-	static const regex regex_domain("[a-zA-Z0-9.]+");
+	static const boost::regex regex_ip("\\d{1,3}.\\d{1,3}.\\d{1,3}.\\d{1,3}");
+	static const boost::regex regex_password("[a-zA-Z0-9.:;,_-]+");
+	static const boost::regex regex_domain("[a-zA-Z0-9.]+");
 	
 	
 	if (argc != 4) {
@@ -81,13 +82,13 @@ int main(int argc, const char ** argv)
 	}
 	
 	/* read configuration */
-	property_tree::ptree config;
-	property_tree::ini_parser::read_ini(CONFIG_FILE, config);
+	pt::ptree config;
+	pt::ini_parser::read_ini(CONFIG_FILE, config);
 	std::string nsupdate = config.get<std::string>("nsupdate");
 	unsigned server_port = config.get<unsigned>("port", 53);
 	
 	/* Given the domain, check whether the password matches */
-	optional<std::string> correct_password = config.get_optional<std::string>(path(domain+"/password", '/'));
+	boost::optional<std::string> correct_password = config.get_optional<std::string>(pt::ptree::path_type(domain+"/password", '/'));
 	if (!correct_password || *correct_password != password) {
 		std::cerr << "Password incorrect." << std::endl;
 		exit(1);
