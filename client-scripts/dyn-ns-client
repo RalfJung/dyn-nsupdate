@@ -47,7 +47,8 @@ def getMyIP(server):
 
 def getCurIP(domain, family):
     try:
-        return socket.getaddrinfo(domain, None, family=family)[0][4][0]
+        addr = socket.getaddrinfo(domain, None, family=family)
+        return addr[0][4][0]
     except socket.gaierror: # domain not found
         return ""
 
@@ -64,6 +65,8 @@ def update_domain(server, domain, ipv4, ipv6, password, verbose):
     # check what the domain is currently mapped to
     curIPv4 = getCurIPv4(domain)
     curIPv6 = getCurIPv6(domain)
+    if verbose:
+        print("Current status of domain {0} is: IPv4 address '{1}', IPv6 address '{2}'".format(domain, curIPv4, curIPv6))
     
     # check if there's something to do
     needUpdate = (ipv4 is not None and curIPv4 != ipv4) or (ipv6 is not None and curIPv6 != ipv6)
@@ -108,9 +111,20 @@ if __name__ == "__main__":
                         help="The domains to update")
     args = parser.parse_args()
 
-    # get our own IPs
-    myIPv4 = getMyIP(serverIPv4) if haveIPv4 else None
-    myIPv6 = getMyIP(serverIPv6) if haveIPv6 else None
+    # get our own IPv4
+    if haveIPv4:
+        myIPv4 = getMyIP(serverIPv4)
+        if args.verbose:
+            print("My IPv4 is",myIPv4)
+    else:
+        myIPv4 = None
+    # and IPv6
+    if haveIPv6:
+        myIPv6 = getMyIP(serverIPv6)
+        if args.verbose:
+            print("My IPv6 is",myIPv6)
+    else:
+        myIPv6 = None
 
     # update all the domains
     exitcode = 0
