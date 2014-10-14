@@ -38,10 +38,10 @@ if "password" not in form or "domain" not in form or ("ip" not in form and "ipv6
     print "Mandatory argument missing: You must supply all of 'password', 'domain' and at least either 'ip' or 'ipv6'"
     sys.exit()
 
-domain = str(form.getvalue("domain"))
-password = str(form.getvalue("password"))
-ip = str(form.getvalue("ip"))
-ipv6 = str(form.getvalue("ipv6"))
+domain = form.getfirst("domain")
+password = form.getfirst("password")
+ip = form.getfirst("ip")
+ipv6 = form.getfirst("ipv6")
 
 # run update program
 args = ["/var/lib/bind/dyn-nsupdate", "--domain", domain, "--password", password]
