@@ -29,59 +29,92 @@
 import urllib.request, socket, sys, argparse
 
 # configuration variables
-server = 'ipv4.ns.ralfj.de'
 domains = ['domain.dyn.ralfj.de'] # list of domains to update
 password = 'yourpassword'
-# END of configuration variables
+haveIPv4 = True
+haveIPv6 = False
 
-# allow overwriting some values on the command-line
-parser = argparse.ArgumentParser(description='Update a domain managed by a dyn-nsupdate server')
-parser.add_argument("-s", "--server",
-                    dest="server", default=server,
-                    help="The dyn-nsupdate server")
-parser.add_argument("-p", "--password",
-                    dest="password", default=password,
-                    help="The password used to update the domains")
-parser.add_argument("-v", "--verbose",
-                    action="store_true", dest="verbose",
-                    help="Be more verbose")
-parser.add_argument("domains",  metavar='DOMAIN', nargs='*', default=domains,
-                    help="The domains to update")
-args = parser.parse_args()
+serverIPv4 = 'ipv4.ns.ralfj.de' # Only needed if haveIPv4 is True. This server should NOT have an AAAA record!
+serverIPv6 = 'ipv6.ns.ralfj.de' # Only needed if haveIPv6 is True. This server should NOT have an A record!
+server     = 'ns.ralfj.de'
+# END of configuration variables
 
 def urlopen(url):
     return urllib.request.urlopen(url).read().decode('utf-8').strip()
 
-myip = urlopen('https://'+args.server+'/checkip')
+def getMyIP(server):
+    return urlopen('https://'+server+'/checkip')
 
-def update_domain(domain):
-    '''Update the given domain, using the global server, user, password. Returns True on success, False on failure.'''
-    global myip, args
-    # check if the domain is already mapped to our current IP
+def getCurIP(domain, family):
     try:
-        domainip = socket.gethostbyname(domain)
-        if myip == domainip:
-            # nothing to do
-            if args.verbose:
-                print("Domain",domain,"already up-to-date, not doing anything")
-            return True
+        return socket.getaddrinfo(domain, None, family=family)[0][4][0]
     except socket.gaierror: # domain not found
-        pass
+        return ""
+
+def getCurIPv4(domain):
+    return getCurIP(domain, socket.AF_INET)
+
+def getCurIPv6(domain):
+    return getCurIP(domain, socket.AF_INET6)
+
+def update_domain(server, domain, ipv4, ipv6, password, verbose):
+    '''Update the given domain, using the server, password. ipv4 or ipv6 can be None to not update that record. Returns True on success, False on failure.'''
+    assert ipv4 is not None or ipv6 is not None
+    
+    # check what the domain is currently mapped to
+    curIPv4 = getCurIPv4(domain)
+    curIPv6 = getCurIPv6(domain)
+    
+    # check if there's something to do
+    needUpdate = (ipv4 is not None and curIPv4 != ipv4) or (ipv6 is not None and curIPv6 != ipv6)
+    if not needUpdate:
+        if verbose:
+            print("Everything alread up-to-date, nothing to do")
+        return True
 
     # we need to update the IP
-    result = urlopen('https://'+args.server+'/update?password='+urllib.parse.quote(args.password)+'&domain='+urllib.parse.quote(domain)+'&ip='+urllib.parse.quote(myip))
-    if 'good '+myip == result: 
-        print("Successfully updated domain",domain,"to",myip)
+    url = 'https://'+server+'/update?password='+urllib.parse.quote(password)+'&domain='+urllib.parse.quote(domain)
+    expected = "good"
+    if ipv4 is not None:
+        url += '&ip='+urllib.parse.quote(ipv4)
+        expected += " "+ipv4
+    if ipv6 is not None:
+        url += '&ipv6='+urllib.parse.quote(ipv6)
+        expected += " "+ipv6
+    result = urlopen(url)
+    
+    # did everything go as planned?
+    if result == expected:
+        if verbose:
+            print("Successfully updated domain",domain)
         # all went all right
         return True
     else:
         # Something went wrong
-        print("Unexpected answer from server",server,"while updating",domain,"to",myip)
+        print("Unexpected answer from server",server,"while updating",domain)
         print(result)
         return False
 
-exitcode = 0
-for domain in args.domains:
-    if not update_domain(domain):
-        exitcode = 1
-sys.exit(exitcode)
+if __name__ == "__main__":
+    # allow overwriting some values on the command-line
+    parser = argparse.ArgumentParser(description='Update a domain managed by a dyn-nsupdate server')
+    parser.add_argument("-p", "--password",
+                        dest="password", default=password,
+                        help="The password used to update the domains")
+    parser.add_argument("-v", "--verbose",
+                        action="store_true", dest="verbose",
+                        help="Be more verbose")
+    parser.add_argument("domains",  metavar='DOMAIN', nargs='*', default=domains,
+                        help="The domains to update")
+    args = parser.parse_args()
+
+    # get our own IPs
+    myIPv4 = getMyIP(serverIPv4) if haveIPv4 else None
+    myIPv6 = getMyIP(serverIPv6) if haveIPv6 else None
+
+    # update all the domains
+    exitcode = 0
+    for domain in args.domains:
+        if not update_domain(server, domain, myIPv4, myIPv6, args.password, verbose=args.verbose):
+            exitcode = 1
+    sys.exit(exitcode)
