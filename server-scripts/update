@@ -42,6 +42,8 @@ domain = form.getfirst("domain")
 password = form.getfirst("password")
 ip = form.getfirst("ip")
 ipv6 = form.getfirst("ipv6")
+assert domain is not None and password is not None
+assert ip is not None or ipv6 is not None
 
 # run update program
 args = ["/var/lib/bind/dyn-nsupdate", "--domain", domain, "--password", password]
@@ -59,4 +61,9 @@ if p.returncode or stderr or stdout:
     if stdout: print stdout
     if stderr: print stderr
 else:
-    print "good",ip
+    print "good",
+    if ip is not None:
+        print ip,
+    if ipv6 is not None:
+        print ipv6,
+    print
