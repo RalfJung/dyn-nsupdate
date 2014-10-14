@@ -39,6 +39,9 @@
 
 namespace pt = boost::property_tree;
 namespace po = boost::program_options;
+using std::string;
+using boost::regex;
+using boost::optional;
 
 static void write(int fd, const char *str)
 {
@@ -52,100 +55,140 @@ static void write(int fd, const char *str)
 
 int main(int argc, const char ** argv)
 {
-    static const boost::regex regex_ip("\\d{1,3}.\\d{1,3}.\\d{1,3}.\\d{1,3}");
-    static const boost::regex regex_password("[a-zA-Z0-9.:;,_-]+");
-    static const boost::regex regex_domain("[a-zA-Z0-9.]+");
-    
-    
-    if (argc != 4) {
-        std::cerr << "Usage: " << argv[0] << " <domain> <password> <IP address>" << std::endl;
-        return 1;
-    }
-    
-    /* Obtain input */
-    std::string domain = argv[1];
-    std::string password = argv[2];
-    std::string ip = argv[3];
-    
-    /* Validate input */
-    if (!regex_match(ip, regex_ip)) {
-        std::cerr << "Invalid IP address " << ip << "." << std::endl;
-        exit(1);
-    }
-    if (!regex_match(domain, regex_domain)) {
-        std::cerr << "Invalid domain " << domain << "." << std::endl;
-        exit(1);
-    }
-    if (!regex_match(password, regex_password)) {
-        std::cerr << "Invalid password " << password << "." << std::endl;
-        exit(1);
-    }
-    
-    /* read configuration */
-    pt::ptree config;
-    pt::ini_parser::read_ini(CONFIG_FILE, config);
-    std::string nsupdate = config.get<std::string>("nsupdate");
-    unsigned server_port = config.get<unsigned>("port", 53);
-    
-    /* Given the domain, check whether the password matches */
-    boost::optional<std::string> correct_password = config.get_optional<std::string>(pt::ptree::path_type(domain+"/password", '/'));
-    if (!correct_password || *correct_password != password) {
-        std::cerr << "Password incorrect." << std::endl;
-        exit(1);
-    }
-    
-    /* preapre the pipe */
-    int pipe_ends[2];
-    if (pipe(pipe_ends) < 0) {
-        std::cerr << "Error opening pipe." << std::endl;
-        exit(1);
-    }
-
-    /* Launch nsupdate */
-    pid_t child_pid = fork();
-    if (child_pid < 0) {
-        std::cerr << "Error while forking." << std::endl;
-        exit(1);
-    }
-    if (child_pid == 0) {
-        /* We're in the child */
-        /* Close write end, use read end as stdin */
-        close(pipe_ends[1]);
-        if (dup2(pipe_ends[0], fileno(stdin)) < 0) {
-            std::cerr << "There was an error redirecting stdin." << std::endl;
+    try {
+        static const regex regex_ipv4("\\d{1,3}(\\.\\d{1,3}){3}|");
+        static const regex regex_ipv6("[a-fA-F0-9]{1,4}(:[a-fA-F0-9]{1,4}){7}|");
+        static const regex regex_password("[a-zA-Z0-9.:;,_-]+");
+        static const regex regex_domain("[a-zA-Z0-9.]+");
+        
+        // Declare the supported options.
+        po::options_description desc("Allowed options");
+        desc.add_options()
+            ("help", "produce help message")
+            ("domain", po::value<string>()->required(), "the domain to update")
+            ("password", po::value<string>()->required(), "the password for the domain")
+            ("ipv4", po::value<string>(), "the new IPv4 address (empty to delete the A record)")
+            ("ipv6", po::value<string>(), "the new IPv6 address (empty to delete the AAAA record)")
+        ;
+        
+        // parse arguments
+        po::variables_map vm;
+        po::store(po::parse_command_line(argc, argv, desc), vm);
+        po::notify(vm);    
+        if (vm.count("help")) {
+            std::cout << "dyn-nsupdate -- a safe setuid wrapper for nsupdate" << std::endl << std::endl;
+            std::cout << desc << "\n";
+            return 1;
+        }
+        string domain = vm["domain"].as<string>();
+        string password = vm["password"].as<string>();
+        bool haveIPv4 = vm.count("ipv4");
+        string ipv4 = haveIPv4 ? vm["ipv4"].as<string>() : "";
+        bool haveIPv6 = vm.count("ipv6");
+        string ipv6 = haveIPv6 ? vm["ipv6"].as<string>() : "";
+        
+        /* Validate input */
+        if (!regex_match(ipv4, regex_ipv4)) {
+            throw std::runtime_error("Invalid IPv4 address" + ipv4);
+        }
+        if (!regex_match(ipv6, regex_ipv6)) {
+            throw std::runtime_error("Invalid IPv6 address: " + ipv6);
+        }
+        if (!regex_match(domain, regex_domain)) {
+            throw std::runtime_error("Invalid Domain: " + domain);
+        }
+        if (!regex_match(password, regex_password)) {
+           throw std::runtime_error("Invalid Password: " + password);
+        }
+        
+        /* read configuration */
+        pt::ptree config;
+        pt::ini_parser::read_ini(CONFIG_FILE, config);
+        std::string nsupdate = config.get<std::string>("nsupdate");
+        unsigned server_port = config.get<unsigned>("port", 53);
+        
+        /* Given the domain, check whether the password matches */
+        optional<std::string> correct_password = config.get_optional<std::string>(pt::ptree::path_type(domain+"/password", '/'));
+        if (!correct_password || *correct_password != password) {
+            std::cerr << "Password incorrect." << std::endl;
             exit(1);
         }
-        /* exec nsupdate */
-        execl(nsupdate.c_str(), nsupdate.c_str(), "-p", std::to_string(server_port).c_str(), "-l", (char *)NULL);
-        /* There was an error */
-        std::cerr << "There was an error executing nsupdate." << std::endl;
-        exit(1);
+        
+        /* preapre the pipe */
+        int pipe_ends[2];
+        if (pipe(pipe_ends) < 0) {
+            std::cerr << "Error opening pipe." << std::endl;
+            exit(1);
+        }
+
+        /* Launch nsupdate */
+        pid_t child_pid = fork();
+        if (child_pid < 0) {
+            std::cerr << "Error while forking." << std::endl;
+            exit(1);
+        }
+        if (child_pid == 0) {
+            /* We're in the child */
+            /* Close write end, use read end as stdin */
+            close(pipe_ends[1]);
+            if (dup2(pipe_ends[0], fileno(stdin)) < 0) {
+                std::cerr << "There was an error redirecting stdin." << std::endl;
+                exit(1);
+            }
+            /* exec nsupdate */
+            execl(nsupdate.c_str(), nsupdate.c_str(), "-p", std::to_string(server_port).c_str(), "-l", (char *)NULL);
+            /* There was an error */
+            std::cerr << "There was an error executing nsupdate." << std::endl;
+            exit(1);
+        }
+        
+        /* Send it the command */
+        if (haveIPv4) {
+            write(pipe_ends[1], "update delete ");
+            write(pipe_ends[1], domain.c_str());
+            write(pipe_ends[1], ". A\n");
+            
+            if (!ipv4.empty()) {
+                write(pipe_ends[1], "update add ");
+                write(pipe_ends[1], domain.c_str());
+                write(pipe_ends[1], ". 60 A ");
+                write(pipe_ends[1], ipv4.c_str());
+                write(pipe_ends[1], "\n");
+            }
+        }
+        
+        if (haveIPv6) {
+            write(pipe_ends[1], "update delete ");
+            write(pipe_ends[1], domain.c_str());
+            write(pipe_ends[1], ". AAAA\n");
+            
+            if (!ipv6.empty()) {
+                write(pipe_ends[1], "update add ");
+                write(pipe_ends[1], domain.c_str());
+                write(pipe_ends[1], ". 60 AAAA ");
+                write(pipe_ends[1], ipv6.c_str());
+                write(pipe_ends[1], "\n");
+            }
+        }
+        
+        write(pipe_ends[1], "send\n");
+        
+        /* Close both ends */
+        close(pipe_ends[0]);
+        close(pipe_ends[1]);
+        
+        /* Wait for child to be gone */
+        int child_status;
+        waitpid(child_pid, &child_status, 0);
+        if (child_status != 0) {
+            std::cerr << "There was an error in the child." << std::endl;
+            exit(1);
+        }
     }
-    
-    /* Send it the command */
-    write(pipe_ends[1], "update delete ");
-    write(pipe_ends[1], domain.c_str());
-    write(pipe_ends[1], ". A\n");
-    
-    write(pipe_ends[1], "update add ");
-    write(pipe_ends[1], domain.c_str());
-    write(pipe_ends[1], ". 60 A ");
-    write(pipe_ends[1], ip.c_str());
-    write(pipe_ends[1], "\n");
-    
-    write(pipe_ends[1], "send\n");
-    
-    /* Close both ends */
-    close(pipe_ends[0]);
-    close(pipe_ends[1]);
-    
-    /* Wait for child to be gone */
-    int child_status;
-    waitpid(child_pid, &child_status, 0);
-    if (child_status != 0) {
-        std::cerr << "There was an error in the child." << std::endl;
-        exit(1);
-    }
+    catch(std::exception &e) {
+        std::cout << e.what() << "\n";
+        return 1;
+    } 
     
     return 0;
 }

@@ -27,23 +27,29 @@
 # either expressed or implied, of the FreeBSD Project.
 
 import cgi, os, sys, subprocess
-form = cgi.FieldStorage()
+form = cgi.FieldStorage(keep_blank_values=True)
 
 # print headers
 print "Content-Type: text/plain"
 print ""
 
 # get input
-if "password" not in form or "domain" not in form or "ip" not in form:
-    print "Mandatory argument missing: You must supply all of 'password', 'domain', 'ip'"
+if "password" not in form or "domain" not in form or ("ip" not in form and "ipv6" not in form):
+    print "Mandatory argument missing: You must supply all of 'password', 'domain' and at least either 'ip' or 'ipv6'"
     sys.exit()
 
-ip = form["ip"].value
-domain = form["domain"].value
-password = form["password"].value
+domain = str(form.getvalue("domain"))
+password = str(form.getvalue("password"))
+ip = str(form.getvalue("ip"))
+ipv6 = str(form.getvalue("ipv6"))
 
 # run update program
-p = subprocess.Popen(["/var/lib/bind/dyn-nsupdate", domain, password, ip], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+args = ["/var/lib/bind/dyn-nsupdate", "--domain", domain, "--password", password]
+if ip is not None:
+    args += ["--ipv4", ip]
+if ipv6 is not None:
+    args += ["--ipv6", ipv6]
+p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 (stdout, stderr) = p.communicate()
 
 # check what it did
