@@ -25,19 +25,20 @@
 # The views and conclusions contained in the software and documentation are those
 # of the authors and should not be interpreted as representing official policies, 
 # either expressed or implied, of the FreeBSD Project.
-
-import urllib.request, socket, sys, argparse
-
+#==============================================================================
 # configuration variables
-domains = ['domain.dyn.ralfj.de'] # list of domains to update
-password = 'yourpassword'
+domains = ['test.dyn.example.com'] # list of domains to update
+password = 'some_secure_password'
 haveIPv4 = True
 haveIPv6 = False
 
-serverIPv4 = 'ipv4.ns.ralfj.de' # Only needed if haveIPv4 is True. This server should NOT have an AAAA record!
-serverIPv6 = 'ipv6.ns.ralfj.de' # Only needed if haveIPv6 is True. This server should NOT have an A record!
-server     = 'ns.ralfj.de'
+serverIPv4 = 'ipv4.ns.example.com' # Only needed if haveIPv4 is True. This server should NOT have an AAAA record!
+serverIPv6 = 'ipv6.ns.example.com' # Only needed if haveIPv6 is True. This server should NOT have an A record!
+server     = 'ns.example.com'
 # END of configuration variables
+#==============================================================================
+
+import urllib.request, socket, sys, argparse
 
 def urlopen(url):
     return urllib.request.urlopen(url).read().decode('utf-8').strip()

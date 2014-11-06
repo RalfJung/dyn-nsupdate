@@ -73,7 +73,46 @@ path in the ``update`` CGI script accordingly.
 That's it! Your server is now configured. You can use ``curl`` to test your 
 setup::
 
-  curl 'https://ns.example.com/update?domain=tests.dyn.example.com&password=some_secure_password&ip=127.0.0.1'
+  curl 'https://ns.example.com/update?domain=test.dyn.example.com&password=some_secure_password&ip=127.0.0.1'
+
+
+Client setup (using the script)
+-------------------------------
+
+You can find the client script at ``client-scripts/dyn-ns-client``. It requires 
+Python 3. Copy that script to the machine that should be available under the 
+dynamic domain. Then change the configuration section at the top to match your 
+setup. Note that the script can update a list of domain names, in case you need 
+the machine to have several names (it is preferable to use a CNAME instead, this 
+will reduce the number of updates performed in the zone). The ``serverIPv4`` and 
+``serverIPv6`` are only used if IPv4/IPv6 is enabled. These machines must be 
+available with that protocol only, otherwise it is not possible to reliably 
+detect the current external address.
+
+To run the script regularly, simply set up a cronjob. You can do so by running 
+``crontab -e``, and add a line as follows::
+
+  */15 * * * * /home/user/dyn-ns-client
+
+This sets the update interval to 15min. If your IP address changes daily, you 
+may want to reduce this to 5min to have a smaller timeframe during which your 
+server is not available.
+
+Client setup (using a router)
+-----------------------------
+
+Some routers are able to perform the update of the domain names themselves. The 
+FritzBox is known to be supported. To configure it to tell your server about the 
+current IP address, go to the DynDNS configuration section of the FritzBox and 
+choose the "custom" DynDNS provider. Then enter the following settings:
+
+- Update-URL: ``https://ns.example.com/update?domain=<domain>&password=<pass>&ip=<ipaddr>``
+- Domain Name: ``test.dyn.example.com``
+- User Name: ``just_something``
+- Password: ``some_secure_password``
+
+Note that the user name is ignored.
+
 
 
 Source, License
