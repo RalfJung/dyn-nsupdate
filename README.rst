@@ -1,14 +1,15 @@
-dyn-nsupdate: Dynamically and securely update DNS zones via CGI
+dyn-nsupdate: Self-made DynDNS
 ===============================================================
 
 Introduction
 ------------
 
 Welcome to dyn-nsupdate_, a collection of tools using BIND_, CGI_ and Python_ to 
-provide DynDNS services. Both IPv4 and IPv6 are fully supported.
+provide DynDNS services with your own nameserver. Both IPv4 and IPv6 are fully
+supported.
 
 dyn-nsupdate consists of two pieces: The server part provides a way to update IP 
-addresses in Bind's DNS zone via CGI, in a safe manner. The client part uses CGI 
+addresses in Bind's DNS zones via CGI, in a safe manner. The client part uses CGI
 to update some domain to the current address(es) of the machine it is running 
 on. Alternatively, some routers can be configured to do this themselves. The 
 FritzBox is known to be supported.
@@ -38,7 +39,8 @@ source directory, run::
   cd nsupd-wrapper
   mkdir -p build
   cd build
-  cmake .. -DCMAKE_BUILD_TYPE=Release -DDYNNSUPDATE_CONFIG_FILE=/var/lib/bind/dyn-nsupdate.conf
+  cmake .. -DCMAKE_BUILD_TYPE=Release \
+    -DDYNNSUPDATE_CONFIG_FILE=/var/lib/bind/dyn-nsupdate.conf
   make
 
 This should compile the binary ``dyn-nsupdate``. If you want to put the files in 
