@@ -51,7 +51,7 @@ install it and the sample configuration file, and set their permissions::
   sudo install ../../dyn-nsupdate.conf /var/lib/bind/dyn-nsupdate.conf -o bind -g bind -m u+rw
 
 Finally, edit the config file. The format should be pretty self-explanatory. In 
-particular, *change the password*!
+particular, **change the password**!
 
 Now, let's go on with the CGI scripts. They are using Python 2, so make sure you 
 have that installed. There are two scripts: One is used for clients to detect 
@@ -75,7 +75,9 @@ path in the ``update`` CGI script accordingly.
 That's it! Your server is now configured. You can use ``curl`` to test your 
 setup::
 
-  curl 'https://ns.example.com/update?domain=test.dyn.example.com&password=some_secure_password&ip=127.0.0.1'
+  DOMAIN=test.dyn.example.com
+  PW=some_secure_password
+  curl 'https://ns.example.com/update?domain=$DOMAIN&password=$PW&ip=127.0.0.1'
 
 
 Client setup (using the script)
