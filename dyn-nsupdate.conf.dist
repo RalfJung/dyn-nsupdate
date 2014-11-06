@@ -1,0 +1,4 @@
+nsupdate = /usr/bin/nsupdate
+
+[test.dyn.example.com]
+password = some_secure_password
