@@ -48,7 +48,7 @@ another directory, change the configuration file name accordingly. You can now
 install it and the sample configuration file, and set their permissions::
 
   sudo install dyn-nsupdate /var/lib/bind/dyn-nsupdate -o bind -g bind -m +rx,u+ws
-  sudo install ../../dyn-nsupdate.conf /var/lib/bind/dyn-nsupdate.conf -o bind -g bind -m u+rw
+  sudo install ../../dyn-nsupdate.conf.dist /var/lib/bind/dyn-nsupdate.conf -o bind -g bind -m u+rw
 
 Finally, edit the config file. The format should be pretty self-explanatory. In 
 particular, **change the password**!
