@@ -39,16 +39,16 @@ source directory, run::
   cd nsupd-wrapper
   mkdir -p build
   cd build
-  cmake .. -DCMAKE_BUILD_TYPE=Release \
-    -DDYNNSUPDATE_CONFIG_FILE=/var/lib/bind/dyn-nsupdate.conf
+  DIR=/var/lib/bind
+  cmake .. -DCMAKE_BUILD_TYPE=Release -DDYNNSUPDATE_CONFIG_FILE=$DIR/dyn-nsupdate.conf
   make
 
 This should compile the binary ``dyn-nsupdate``. If you want to put the files in 
 another directory, change the configuration file name accordingly. You can now 
 install it and the sample configuration file, and set their permissions::
 
-  sudo install dyn-nsupdate /var/lib/bind/dyn-nsupdate -o bind -g bind -m +rx,u+ws
-  sudo install ../../dyn-nsupdate.conf.dist /var/lib/bind/dyn-nsupdate.conf -o bind -g bind -m u+rw
+  sudo install dyn-nsupdate $DIR/dyn-nsupdate -o bind -g bind -m +rx,u+ws
+  sudo install ../../dyn-nsupdate.conf.dist $DIR/dyn-nsupdate.conf -o bind -g bind -m u+rw
 
 Finally, edit the config file. The format should be pretty self-explanatory. In 
 particular, **change the password**!
