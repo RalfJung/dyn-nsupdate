@@ -69,7 +69,7 @@ def update_domain(server, domain, ipv4, ipv6, password, verbose):
     needUpdate = (ipv4 is not None and curIPv4 != ipv4) or (ipv6 is not None and curIPv6 != ipv6)
     if not needUpdate:
         if verbose:
-            print("Everything alread up-to-date, nothing to do")
+            print("Everything already up-to-date, nothing to do")
         return True
 
     # we need to update the IP
