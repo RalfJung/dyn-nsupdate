@@ -30,9 +30,10 @@ configuration. Furthermore, I assume the directory ``/var/lib/bind/`` exists.
 
 There are two pieces that have to be installed: A setuid wrapper which checks 
 the passwords, and applies the updates; and some CGI scripts offered through a 
-webserver.
+webserver. Please read this guide carefully and make sure you understand the
+security implications of what you are doing. setuid wrappers are not toys!
 
-Let's start with the setuid wrapper. To compile it, you will need cmake and 
+Let's setting up the setuid wrapper. To compile it, you will need cmake and 
 boost, including the regex and program_options boost packages. Starting in the 
 source directory, run::
 
@@ -43,9 +44,14 @@ source directory, run::
   cmake .. -DCMAKE_BUILD_TYPE=Release -DDYNNSUPDATE_CONFIG_FILE=$DIR/dyn-nsupdate.conf
   make
 
-This should compile the binary ``dyn-nsupdate``. If you want to put the files in 
-another directory, change the configuration file name accordingly. You can now 
-install it and the sample configuration file, and set their permissions::
+This should compile the binary ``dyn-nsupdate``. Notice that the path to the 
+configuration file will be hard-coded into the binary. If it were run-time 
+configurable, then a user could call the script with her own configuration file, 
+gaining access to all domains BIND lets you configure. If you want to put the 
+files in another directory, change the configuration file name accordingly. Make 
+sure the file (nor any of the directories it is in) can *not be written by 
+non-root*. The setuid wrapper trusts that file. You can now install it and the 
+sample configuration file, and set their permissions::
 
   sudo install dyn-nsupdate $DIR/dyn-nsupdate -o bind -g bind -m +rx,u+ws
   sudo install ../../dyn-nsupdate.conf.dist $DIR/dyn-nsupdate.conf -o bind -g bind -m u+rw
