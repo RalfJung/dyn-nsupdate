@@ -1,0 +1,30 @@
+# The server to send the update requests to
+server = ns.example.com
+# Domains to update (multiple domains are possible, separated by comma)
+domains = test.dyn.example.com
+# Password to be sent to the server-side scripts
+password = some_secure_password
+
+[IPv4]
+# Possible IPv4 detection methods are
+# none: Don't set IPv4 address (leaves the domain's A record untouched).
+# web: Call a website to detect the current, external IPv4 address.
+method = web
+
+# The server to query for web-basd IPv4 detection (if enabled).
+# Default: same as the global server in the default section.
+# This server should NOT have an AAAA record, or it may return the IPv6 address instead!
+server = ipv4.ns.example.com
+
+[IPv6]
+# Possible IPv6 detection methods are
+# none: Don't set IPv6 address (leaves the domain's AAAA record untouched).
+# web: Call a website to detect the current, external IPv6 address.
+# local: Try to detect the global IPv6 address based on the configuration of the local network interfaces.
+method = none
+
+# The server to query for web-basd IPv6 detection.
+# Default: same as the global server in the default section.
+# This server should NOT have an A record, or it may return the IPv4 address instead!
+server = ipv6.ns.example.com
+

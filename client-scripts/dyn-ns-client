@@ -22,27 +22,53 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #==============================================================================
-# configuration variables
-domains = ['test.dyn.example.com'] # list of domains to update
-password = 'some_secure_password'
-haveIPv4 = True
-haveIPv6 = False
 
-serverIPv4 = 'ipv4.ns.example.com' # Only needed if haveIPv4 is True. This server should NOT have an AAAA record!
-serverIPv6 = 'ipv6.ns.example.com' # Only needed if haveIPv6 is True. This server should NOT have an A record!
-server     = 'ns.example.com'
-# END of configuration variables
-#==============================================================================
+import urllib.request, socket, sys, argparse, os, configparser, itertools
 
-import urllib.request, socket, sys, argparse
+def readConfig(fname, defSection = 'DEFAULT'):
+    config = configparser.ConfigParser()
+    with open(fname) as file:
+        stream = itertools.chain(("["+defSection+"]\n",), file)
+        config.read_file(stream)
+    return config
+
+def getConfigDir():
+    try:
+        from xdg import BaseDirectory
+        return os.path.join(BaseDirectory.xdg_config_home, "dyn-nsupdate")
+    except ImportError:
+        return os.path.expanduser("~/.config/dyn-nsupdate")
 
 def urlopen(url):
     return urllib.request.urlopen(url).read().decode('utf-8').strip()
 
-def getMyIP(server):
-    return urlopen('https://'+server+'/checkip')
+def getMyIP(family, config, methods = {}, verbose = False):
+    '''Returns our current IP address (<family> can be "IPv4" or "IPv6"), detected as given by the configuration.
+       Additional detection methods can be supplied via <methods>.'''
+    method = config[family]['method']
+    if method == 'none':
+        return None
+    elif method == 'web':
+        server = config[family].get('server', config['DEFAULT']['server'])
+        ip = urlopen('https://'+server+'/checkip')
+        if verbose:
+            print("Server",server,"says my",family,"is",ip)
+        return ip
+    elif method in 'methods':
+        return methods[method]()
+    else:
+        raise Exception("Unsupported "+family+" detection method: "+method)
+
+def getMyIPv4(config, verbose = False):
+    '''Returns our current IPv4 address, detected as given by the configuration'''
+    return getMyIP("IPv4", config, verbose=verbose)
+
+def getMyIPv6(config, verbose = False):
+    '''Returns our current IPv6 address, detected as given by the configuration'''
+    return getMyIP("IPv6", config, verbose=verbose)
 
 def getCurIP(domain, family):
+    '''Return the current IP of the given <domain>. <family> can be socket.AF_INET or socket.AF_INET6.'''
     try:
         addr = socket.getaddrinfo(domain, None, family=family)
         return addr[0][4][0]
@@ -50,13 +76,17 @@ def getCurIP(domain, family):
         return ""
 
 def getCurIPv4(domain):
+    '''Returns the current IPv4 address of the given domain'''
     return getCurIP(domain, socket.AF_INET)
 
 def getCurIPv6(domain):
+    '''Returns the current IPv6 address of the given domain'''
     return getCurIP(domain, socket.AF_INET6)
 
-def update_domain(server, domain, ipv4, ipv6, password, verbose):
-    '''Update the given domain, using the server, password. ipv4 or ipv6 can be None to not update that record. Returns True on success, False on failure.'''
+def updateDomain(server, domain, ipv4, ipv6, password, verbose):
+    '''Update the given domain, using the server, password. ipv4 or ipv6 can be None to not update that record, or strings with the respective addresses.
+       Updates ae only performed if necessary.
+       Returns True on success, False on failure.'''
     assert ipv4 is not None or ipv6 is not None
     
     # check what the domain is currently mapped to
@@ -86,7 +116,7 @@ def update_domain(server, domain, ipv4, ipv6, password, verbose):
     # did everything go as planned?
     if result == expected:
         if verbose:
-            print("Successfully updated domain",domain)
+            print("Successfully updated domain",domain,"on",server)
         # all went all right
         return True
     else:
@@ -98,34 +128,29 @@ def update_domain(server, domain, ipv4, ipv6, password, verbose):
 if __name__ == "__main__":
     # allow overwriting some values on the command-line
     parser = argparse.ArgumentParser(description='Update a domain managed by a dyn-nsupdate server')
-    parser.add_argument("-p", "--password",
-                        dest="password", default=password,
-                        help="The password used to update the domains")
+    parser.add_argument("-c", "--config",
+                        dest="config", default=os.path.join(getConfigDir(), "dyn-ns-client.conf"),
+                        help="The configuration file")
     parser.add_argument("-v", "--verbose",
                         action="store_true", dest="verbose",
                         help="Be more verbose")
-    parser.add_argument("domains",  metavar='DOMAIN', nargs='*', default=domains,
-                        help="The domains to update")
     args = parser.parse_args()
+    
+    # read config
+    if not os.path.isfile(args.config):
+        raise Exception("The config file does not exist: "+args.config)
+    config = readConfig(args.config)
 
-    # get our own IPv4
-    if haveIPv4:
-        myIPv4 = getMyIP(serverIPv4)
-        if args.verbose:
-            print("My IPv4 is",myIPv4)
-    else:
-        myIPv4 = None
-    # and IPv6
-    if haveIPv6:
-        myIPv6 = getMyIP(serverIPv6)
-        if args.verbose:
-            print("My IPv6 is",myIPv6)
-    else:
-        myIPv6 = None
+    # get our own addresses
+    myIPv4 = getMyIPv4(config, args.verbose)
+    myIPv6 = getMyIPv6(config, args.verbose)
 
     # update all the domains
     exitcode = 0
-    for domain in args.domains:
-        if not update_domain(server, domain, myIPv4, myIPv6, args.password, verbose=args.verbose):
+    domains = map(str.strip, config['DEFAULT']['domains'].split(','))
+    if not domains:
+        raise Exception("No domain given to update!")
+    for domain in domains:
+        if not updateDomain(config['DEFAULT']['server'], domain, myIPv4, myIPv6, config['DEFAULT']['password'], verbose=args.verbose):
             exitcode = 1
     sys.exit(exitcode)
