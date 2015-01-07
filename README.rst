@@ -93,12 +93,12 @@ Client setup (using the script)
 You can find the client script at ``client-scripts/dyn-ns-client``. It requires 
 Python 3. Copy that script to the machine that should be available under the 
 dynamic domain. Also copy the sample configuration file ``dyn-ns-client.conf.dist`` to 
-``$HOME/.config/dyn-nsupdate/dyn-ns-client.conf.dist``. (You can choose another 
-name, but then you will have to tell the script about it). That file contains 
+``$HOME/.config/dyn-nsupdate/dyn-ns-client.conf``. (You can choose another 
+name, but then you will have to tell the script about it.) That file contains 
 comments that should explain everything. Note that the script can update a list 
-of domain names, in case you need the machine to have several names (it is 
+of domain names, in case you need the machine to have several names. It is 
 preferable to use a CNAME instead, this will reduce the number of updates 
-performed in the zone).
+performed in the zone.
 
 To run the script regularly, simply set up a cronjob. You can do so by running 
 ``crontab -e``, and add a line as follows::
