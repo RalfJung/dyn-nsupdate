@@ -63,7 +63,8 @@ Now, let's go on with the CGI scripts. They are using Python 2, so make sure you
 have that installed. There are two scripts: One is used for clients to detect 
 their current external IP address, and one is used to do the actual update of 
 the domain. The first script should be available on a domain that is available 
-only through a single protocol, i.e., IPv4 only or IPv6 only. If you want to 
+only through a single protocol, i.e., IPv4 only or IPv6 only.  This is required 
+to reliably detect the current address of the given protocol. If you want to 
 support both IPv4 and IPv6, I suggest you have three domains 
 ``ipv4.ns.example.com``, ``ipv6.ns.example.com`` and ``ns.example.com`` where 
 only the latter is available via both protocols (this is something you have to 
@@ -91,13 +92,13 @@ Client setup (using the script)
 
 You can find the client script at ``client-scripts/dyn-ns-client``. It requires 
 Python 3. Copy that script to the machine that should be available under the 
-dynamic domain. Then change the configuration section at the top to match your 
-setup. Note that the script can update a list of domain names, in case you need 
-the machine to have several names (it is preferable to use a CNAME instead, this 
-will reduce the number of updates performed in the zone). The ``serverIPv4`` and 
-``serverIPv6`` are only used if IPv4/IPv6 is enabled. These machines must be 
-available with that protocol only, otherwise it is not possible to reliably 
-detect the current external address.
+dynamic domain. Also copy the sample configuration file ``dyn-ns-client.conf.dist`` to 
+``$HOME/.config/dyn-nsupdate/dyn-ns-client.conf.dist``. (You can choose another 
+name, but then you will have to tell the script about it). That file contains 
+comments that should explain everything. Note that the script can update a list 
+of domain names, in case you need the machine to have several names (it is 
+preferable to use a CNAME instead, this will reduce the number of updates 
+performed in the zone).
 
 To run the script regularly, simply set up a cronjob. You can do so by running 
 ``crontab -e``, and add a line as follows::
@@ -137,4 +138,5 @@ Contact
 -------
 
 If you found a bug, or want to leave a comment, please
-`send me a mail <mailto:post-AT-ralfj-DOT-de>`_.
+`send me a mail <mailto:post-AT-ralfj-DOT-de>`_. All sorts of feedback are
+welcome :)
