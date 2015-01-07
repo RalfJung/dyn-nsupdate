@@ -23,7 +23,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #==============================================================================
 
-import urllib.request, socket, sys, argparse, os, configparser, itertools
+import urllib.request, socket, sys, argparse, os, configparser, itertools, subprocess, re
 
 def readConfig(fname, defSection = 'DEFAULT'):
     config = configparser.ConfigParser()
@@ -54,7 +54,7 @@ def getMyIP(family, config, methods = {}, verbose = False):
         if verbose:
             print("Server",server,"says my",family,"is",ip)
         return ip
-    elif method in 'methods':
+    elif method in methods:
         return methods[method]()
     else:
         raise Exception("Unsupported "+family+" detection method: "+method)
@@ -65,7 +65,18 @@ def getMyIPv4(config, verbose = False):
 
 def getMyIPv6(config, verbose = False):
     '''Returns our current IPv6 address, detected as given by the configuration'''
-    return getMyIP("IPv6", config, verbose=verbose)
+    def local():
+        out = subprocess.check_output(["ip", "addr"])
+        for line in out.decode('utf-8').split('\n'):
+            m = re.search('inet6 ([a-fA-F0-9:]+)/64 ([a-zA-Z0-9 ]*)', line)
+            if m is not None:
+                ip = m.group(1)
+                flags = m.group(2).split()
+                if not 'temporary' in flags and not 'deprecated' in flags:
+                    if verbose:
+                        print("Local IPv6 detected to be",ip)
+                    return ip
+    return getMyIP("IPv6", config, methods={'local': local}, verbose=verbose)
 
 def getCurIP(domain, family):
     '''Return the current IP of the given <domain>. <family> can be socket.AF_INET or socket.AF_INET6.'''
