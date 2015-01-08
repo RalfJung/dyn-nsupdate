@@ -76,6 +76,7 @@ def getMyIPv6(config, verbose = False):
                     if verbose:
                         print("Local IPv6 detected to be",ip)
                     return ip
+        raise Exception("Unable to detect correct local IPv6 address")
     return getMyIP("IPv6", config, methods={'local': local}, verbose=verbose)
 
 def getCurIP(domain, family):
