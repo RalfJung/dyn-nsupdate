@@ -62,15 +62,17 @@ particular, **change the password**!
 Now, let's go on with the CGI scripts. They are using Python 2, so make sure you 
 have that installed. There are two scripts: One is used for clients to detect 
 their current external IP address, and one is used to do the actual update of 
-the domain. The first script should be available on a domain that is available 
-only through a single protocol, i.e., IPv4 only or IPv6 only.  This is required 
-to reliably detect the current address of the given protocol. If you want to 
-support both IPv4 and IPv6, I suggest you have three domains 
+the domain. The first script is used by the "web" IP detection method (see 
+client configuration below). It should be available on a domain that is 
+available only through a single protocol, i.e., IPv4 only or IPv6 only. This is 
+required to reliably detect the current address of the given protocol. If you 
+want to support both IPv4 and IPv6, I suggest you have three domains 
 ``ipv4.ns.example.com``, ``ipv6.ns.example.com`` and ``ns.example.com`` where 
 only the latter is available via both protocols (this is something you have to 
-configure in your ``example.com`` zone). All can serve the same scripts (e.g. 
-via a ``ServerAlias`` in the apache configuration). I also **strongly suggest** 
-you make these domains *HTTPS-only*, as the client script will send a password!
+configure in your ``example.com`` DNS zone). All can serve the same scripts 
+(e.g. via a ``ServerAlias`` in the apache configuration). I also **strongly 
+suggest** you make these domains *HTTPS-only*, as the client script will send a 
+password!
 
 Choose some directory (e.g., ``/srv/ns.example.com``) for the new domain, and 
 copy the content of ``server-scripts`` there. Now configure your webserver 
@@ -92,13 +94,18 @@ Client setup (using the script)
 
 You can find the client script at ``client-scripts/dyn-ns-client``. It requires 
 Python 3. Copy that script to the machine that should be available under the 
-dynamic domain. Also copy the sample configuration file ``dyn-ns-client.conf.dist`` to 
-``$HOME/.config/dyn-nsupdate/dyn-ns-client.conf``. (You can choose another 
-name, but then you will have to tell the script about it.) That file contains 
-comments that should explain everything. Note that the script can update a list 
-of domain names, in case you need the machine to have several names. It is 
-preferable to use a CNAME instead, this will reduce the number of updates 
-performed in the zone.
+dynamic domain. Also copy the sample configuration file 
+``dyn-ns-client.conf.dist`` to ``$HOME/.config/dyn-nsupdate/dyn-ns-client.conf``.
+You can choose another name, but then you will have to tell the script about it. 
+An important aspect of configuration is how to detect the current addresses of 
+the machine the script is running on. For IPv4, this can only be "web", which 
+can deal with NAT. For IPv6, the script can alternatively attempt to detect the 
+correct local address to use. The sample file contains comments that should 
+explain everything.
+
+Note that the script can update a list of domain names, in case you need the 
+machine to have several names. It is preferable to use a CNAME instead, this 
+will reduce the number of updates performed in the zone.
 
 To run the script regularly, simply set up a cronjob. You can do so by running 
 ``crontab -e``, and add a line as follows::
