@@ -1,4 +1,5 @@
 nsupdate = /usr/bin/nsupdate
+key = keyname:passwd
 
 [test.dyn.example.com]
 password = some_secure_password
