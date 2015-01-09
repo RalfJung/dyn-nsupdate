@@ -1,5 +1,12 @@
+# Full path to nsupdate binary
 nsupdate = /usr/bin/nsupdate
-key = keyname:passwd
+# You can change the port that will be used to talk to BIND (nsupdate "-p" option).
+#port = 53
+# If you need a key to authenticate updates, give its filename here (nsupdate "-k" option).
+#keyfile = /var/lib/bind/keys/zone.key
+# Alternatively, you can specify the name and secret of the key here (nsupdate "-y" option). Note that this is *discouraged* (see nsupdate man page for details).
+#key = keyname:passwd
 
+# Add one section per zone that can be updated, containing only the relevant password.
 [test.dyn.example.com]
 password = some_secure_password

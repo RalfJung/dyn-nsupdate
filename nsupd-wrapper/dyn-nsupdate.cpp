@@ -102,7 +102,14 @@ int main(int argc, const char ** argv)
         pt::ini_parser::read_ini(CONFIG_FILE, config);
         std::string nsupdate = config.get<std::string>("nsupdate");
         unsigned server_port = config.get<unsigned>("port", 53);
-        std::string key = config.get<std::string>("key","");
+        std::string keyfile = config.get<std::string>("keyfile", "");
+        std::string key = config.get<std::string>("key", "");
+        
+        /* check for some invalid configurations */
+        if (keyfile.size() > 0 && key.size() > 0) {
+            std::cerr << "You can only have either a keyfile or a key set. Please fix your configuration." << std::endl;
+            exit(1);
+        }
         
         /* Given the domain, check whether the password matches */
         optional<std::string> correct_password = config.get_optional<std::string>(pt::ptree::path_type(domain+"/password", '/'));
@@ -133,9 +140,13 @@ int main(int argc, const char ** argv)
                 exit(1);
             }
             /* exec nsupdate */
-            if (key.size() > 0) {
+            if (keyfile.size() > 0) {
+                execl(nsupdate.c_str(), nsupdate.c_str(), "-k", keyfile.c_str(), "-p", std::to_string(server_port).c_str(), "-l", (char *)NULL);
+            }
+            else if (key.size() > 0) {
                 execl(nsupdate.c_str(), nsupdate.c_str(), "-y", key.c_str(), "-p", std::to_string(server_port).c_str(), "-l", (char *)NULL);
-            } else {
+            }
+            else {
                 execl(nsupdate.c_str(), nsupdate.c_str(), "-p", std::to_string(server_port).c_str(), "-l", (char *)NULL);
             }
             /* There was an error */
