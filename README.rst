@@ -97,7 +97,7 @@ Python 3. Copy that script to the machine that should be available under the
 dynamic domain. Also copy the sample configuration file 
 ``dyn-ns-client.conf.dist`` to ``$HOME/.config/dyn-nsupdate/dyn-ns-client.conf``.
 You can choose another name, but then you will have to tell the script about it. 
-Call "dyn-ns-client --help" for this and other options the script accepts. An 
+Call ``dyn-ns-client --help`` for this and other options the script accepts. An 
 important aspect of configuration is how to detect the current addresses of the 
 machine the script is running on. For IPv4, this can only be "web", which can 
 deal with NAT. For IPv6, the script can alternatively attempt to detect the 
