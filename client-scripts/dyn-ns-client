@@ -105,7 +105,7 @@ def updateDomain(server, domain, ipv4, ipv6, password, verbose):
     curIPv4 = getCurIPv4(domain)
     curIPv6 = getCurIPv6(domain)
     if verbose:
-        print("Current status of domain {0} is: IPv4 address '{1}', IPv6 address '{2}'".format(domain, curIPv4, curIPv6))
+        print("Current status of domain {} is: IPv4 address '{}', IPv6 address '{}'".format(domain, curIPv4, curIPv6))
     
     # check if there's something to do
     needUpdate = (ipv4 is not None and curIPv4 != ipv4) or (ipv6 is not None and curIPv6 != ipv6)
