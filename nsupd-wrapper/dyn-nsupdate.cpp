@@ -52,8 +52,15 @@ static void write(int fd, const char *str)
 int main(int argc, const char ** argv)
 {
     try {
-        static const regex regex_ipv4("\\d{1,3}(\\.\\d{1,3}){3}|");
-        static const regex regex_ipv6("[a-fA-F0-9]{1,4}(:[a-fA-F0-9]{1,4}){7}|");
+        // These regular expressions are not supposed to be fully precise: nsupdate will check the addresses, too.
+        // However, they have to make sure that there can be no injection attacks.
+#define GROUP "[0-9]{1,3}"
+        static const regex regex_ipv4(GROUP "(\\." GROUP "){3}|");
+#undef GROUP
+#define GROUP "[a-fA-F0-9]{1,4}"
+        static const regex regex_ipv6("(" GROUP "(::?" GROUP "){0,6})?::?" GROUP "|");
+#undef GROUP
+        
         static const regex regex_password("[a-zA-Z0-9.:;,_-]+");
         static const regex regex_domain("[a-zA-Z0-9.]+");
         
