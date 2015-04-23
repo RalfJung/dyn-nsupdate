@@ -33,7 +33,7 @@ the passwords, and applies the updates; and some CGI scripts offered through a
 webserver. Please read this guide carefully and make sure you understand the
 security implications of what you are doing. setuid wrappers are not toys!
 
-Let's setting up the setuid wrapper. To compile it, you will need cmake and 
+Let's first set up the setuid wrapper. To compile it, you will need cmake and 
 boost, including the regex and program_options boost packages. Starting in the 
 source directory, run::
 
@@ -49,7 +49,7 @@ configuration file will be hard-coded into the binary. If it were run-time
 configurable, then a user could call the script with her own configuration file, 
 gaining access to all domains BIND lets you configure. If you want to put the 
 files in another directory, change the configuration file name accordingly. Make 
-sure the file (nor any of the directories it is in) can *not be written by 
+sure the file (and all of the directories it is in) can *not be written by 
 non-root*. The setuid wrapper trusts that file. You can now install it and the 
 sample configuration file, and set their permissions::
 
