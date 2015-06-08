@@ -138,7 +138,8 @@ Source, License
 ---------------
 
 You can find the sources in the `git repository`_ and `on GitHub`_. They are 
-provided under a `2-clause BSD license`_.
+provided under a `2-clause BSD license`_. See the file ``LICENSE-BSD`` for more 
+details.
 
 .. _git repository: http://www.ralfj.de/git/dyn-nsupdate.git
 .. _on GitHub: https://github.com/RalfJung/dyn-nsupdate
