@@ -23,7 +23,17 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #==============================================================================
 
-import urllib.request, socket, sys, argparse, os, configparser, itertools, subprocess, re
+import urllib.request, socket, sys, argparse, os, configparser, itertools, subprocess, re, ssl
+
+VERBOSE_CHANGE = 1
+VERBOSE_FULL   = 2
+
+def sslContext(config):
+    if config['DEFAULT']['ssl_check_cert'].lower() in ('0', 'false', 'no'):
+        context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+        return context
+    else:
+        return None
 
 def readConfig(fname, defSection = 'DEFAULT'):
     config = configparser.ConfigParser()
@@ -39,10 +49,10 @@ def getConfigDir():
     except ImportError:
         return os.path.expanduser("~/.config/dyn-nsupdate")
 
-def urlopen(url):
-    return urllib.request.urlopen(url).read().decode('utf-8').strip()
+def urlopen(url, config):
+    return urllib.request.urlopen(url, context=sslContext(config)).read().decode('utf-8').strip()
 
-def getMyIP(family, config, methods = {}, verbose = False):
+def getMyIP(family, config, methods = {}, verbose = 0):
     '''Returns our current IP address (<family> can be "IPv4" or "IPv6"), detected as given by the configuration.
        Additional detection methods can be supplied via <methods>.'''
     method = config[family]['method']
@@ -50,8 +60,8 @@ def getMyIP(family, config, methods = {}, verbose = False):
         return None
     elif method == 'web':
         server = config[family].get('server', config['DEFAULT']['server'])
-        ip = urlopen('https://'+server+'/checkip')
-        if verbose:
+        ip = urlopen('https://'+server+'/checkip', config)
+        if verbose >= VERBOSE_FULL:
             print("Server",server,"says my",family,"is",ip)
         return ip
     elif method in methods:
@@ -59,11 +69,11 @@ def getMyIP(family, config, methods = {}, verbose = False):
     else:
         raise Exception("Unsupported "+family+" detection method: "+method)
 
-def getMyIPv4(config, verbose = False):
+def getMyIPv4(config, verbose = 0):
     '''Returns our current IPv4 address, detected as given by the configuration'''
     return getMyIP("IPv4", config, verbose=verbose)
 
-def getMyIPv6(config, verbose = False):
+def getMyIPv6(config, verbose = 0):
     '''Returns our current IPv6 address, detected as given by the configuration'''
     def local():
         out = subprocess.check_output(["ip", "addr"])
@@ -72,8 +82,8 @@ def getMyIPv6(config, verbose = False):
             if m is not None:
                 ip = m.group(1)
                 flags = m.group(2).split()
-                if not 'temporary' in flags and not 'deprecated' in flags:
-                    if verbose:
+                if not 'temporary' in flags and not 'deprecated' in flags and not "link" in flags:
+                    if verbose >= VERBOSE_FULL:
                         print("Local IPv6 detected to be",ip)
                     return ip
         raise Exception("Unable to detect correct local IPv6 address")
@@ -95,7 +105,7 @@ def getCurIPv6(domain):
     '''Returns the current IPv6 address of the given domain'''
     return getCurIP(domain, socket.AF_INET6)
 
-def updateDomain(server, domain, ipv4, ipv6, password, verbose):
+def updateDomain(server, domain, ipv4, ipv6, password, config, verbose):
     '''Update the given domain, using the server, password. ipv4 or ipv6 can be None to not update that record, or strings with the respective addresses.
        Updates ae only performed if necessary.
        Returns True on success, False on failure.'''
@@ -104,13 +114,13 @@ def updateDomain(server, domain, ipv4, ipv6, password, verbose):
     # check what the domain is currently mapped to
     curIPv4 = getCurIPv4(domain)
     curIPv6 = getCurIPv6(domain)
-    if verbose:
+    if verbose >= VERBOSE_FULL:
         print("Current status of domain {} is: IPv4 address '{}', IPv6 address '{}'".format(domain, curIPv4, curIPv6))
     
     # check if there's something to do
     needUpdate = (ipv4 is not None and curIPv4 != ipv4) or (ipv6 is not None and curIPv6 != ipv6)
     if not needUpdate:
-        if verbose:
+        if verbose >= VERBOSE_FULL:
             print("Everything already up-to-date, nothing to do")
         return True
 
@@ -123,12 +133,17 @@ def updateDomain(server, domain, ipv4, ipv6, password, verbose):
     if ipv6 is not None:
         url += '&ipv6='+urllib.parse.quote(ipv6)
         expected += " "+ipv6
-    result = urlopen(url)
+    result = urlopen(url, config)
     
     # did everything go as planned?
     if result == expected:
-        if verbose:
-            print("Successfully updated domain",domain,"on",server)
+        if verbose >= VERBOSE_CHANGE:
+            msg = "Successfully updated domain {} on {}:".format(domain, server)
+            if ipv4 is not None:
+                msg += " IPv4={}".format(ipv4)
+            if ipv6 is not None:
+                msg += " IPv6={}".format(ipv6)
+            print(msg)
         # all went all right
         return True
     else:
@@ -144,7 +159,7 @@ if __name__ == "__main__":
                         dest="config", default=os.path.join(getConfigDir(), "dyn-ns-client.conf"),
                         help="The configuration file")
     parser.add_argument("-v", "--verbose",
-                        action="store_true", dest="verbose",
+                        action="count", dest="verbose",
                         help="Be more verbose")
     args = parser.parse_args()
     
@@ -163,6 +178,6 @@ if __name__ == "__main__":
     if not domains:
         raise Exception("No domain given to update!")
     for domain in domains:
-        if not updateDomain(config['DEFAULT']['server'], domain, myIPv4, myIPv6, config['DEFAULT']['password'], verbose=args.verbose):
+        if not updateDomain(config['DEFAULT']['server'], domain, myIPv4, myIPv6, config['DEFAULT']['password'], config, verbose=args.verbose):
             exitcode = 1
     sys.exit(exitcode)
