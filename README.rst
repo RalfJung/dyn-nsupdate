@@ -117,6 +117,10 @@ This sets the update interval to 15min. If your IP address changes daily, you
 may want to reduce this to 5min to have a smaller timeframe during which your 
 server is not available.
 
+If you want to be emailed about changes in your IP address, pass ``-v`` as 
+argument. The script will then only produce output if it has to update the DNS
+record.
+
 Client setup (using a router)
 -----------------------------
 
