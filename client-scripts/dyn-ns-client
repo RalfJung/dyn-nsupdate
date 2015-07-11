@@ -29,7 +29,7 @@ VERBOSE_CHANGE = 1
 VERBOSE_FULL   = 2
 
 def sslContext(config):
-    if config['DEFAULT']['ssl_check_cert'].lower() in ('0', 'false', 'no'):
+    if config['DEFAULT'].get('ssl_check_cert', 'yes').lower() in ('0', 'false', 'no'):
         context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
         return context
     else:
