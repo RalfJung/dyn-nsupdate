@@ -63,7 +63,11 @@ def getMyIP(family, config, methods = {}, verbose = 0):
         return None
     elif method == 'web':
         server = config[family].get('server', config['DEFAULT']['server'])
-        ip = urlopen('https://'+server+'/checkip', config)
+        url = 'https://'+server+'/checkip'
+        try:
+            ip = urlopen(url, config)
+        except urllib.error.URLError:
+            raise Exception("Error fetching {}, make sure the URL is correct and the internet connection actually works.".format(url))
         if verbose >= VERBOSE_FULL:
             print("Server",server,"says my",family,"is",ip)
         return ip
