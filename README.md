@@ -135,7 +135,7 @@ Note that the user name is ignored.
 
 You can find the sources in the
 [git repository](http://www.ralfj.de/git/dyn-nsupdate.git) (also
-available [on GitHub](https://github.com/RalfJung/dyn-nsupdate).  They
+available [on GitHub](https://github.com/RalfJung/dyn-nsupdate)).  They
 are provided under a
 [2-clause BSD license](http://opensource.org/licenses/bsd-license.php). See
 the file `LICENSE-BSD` for more details.
