@@ -61,6 +61,8 @@ def getMyIP(family, config, methods = {}, verbose = 0):
     method = config[family]['method']
     if method == 'none':
         return None
+    elif method == 'remove':
+        return ""
     elif method == 'web':
         server = config[family].get('server', config['DEFAULT']['server'])
         url = 'https://'+server+'/checkip'

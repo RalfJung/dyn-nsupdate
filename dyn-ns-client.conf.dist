@@ -8,6 +8,7 @@ password = some_secure_password
 [IPv4]
 # Possible IPv4 detection methods are
 # none: Don't set IPv4 address (leaves the domain's A record untouched).
+# remove: Remove domain's A record if it exists.
 # web: Call a website to detect the current, external IPv4 address.
 method = web
 
@@ -19,6 +20,7 @@ server = ipv4.ns.example.com
 [IPv6]
 # Possible IPv6 detection methods are
 # none: Don't set IPv6 address (leaves the domain's AAAA record untouched).
+# remove: Remove domain's AAAA record if it exists.
 # web: Call a website to detect the current, external IPv6 address.
 # local: Try to detect the global IPv6 address based on the configuration of the local network interfaces.
 method = none
