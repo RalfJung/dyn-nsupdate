@@ -153,6 +153,8 @@ def updateDomain(server, domain, ipv4, ipv6, password, config, verbose):
                     msg += " IPv4={} (unchanged)".format(curIPv4)
                 else:
                     msg += " IPv4={} -> {}".format(curIPv4, ipv4)
+            if ipv4 is not None and ipv6 is not None:
+                msg += ","
             if ipv6 is not None:
                 if curIPv6 == ipv6:
                     msg += " IPv6={} (unchanged)".format(curIPv6)
