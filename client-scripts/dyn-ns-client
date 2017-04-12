@@ -85,7 +85,8 @@ def getMyIPv4(config, verbose = 0):
 def getMyIPv6(config, verbose = 0):
     '''Returns our current IPv6 address, detected as given by the configuration'''
     def local():
-        out = subprocess.check_output(["ip", "addr"])
+        device = config["IPv6"].get("device")
+        out = subprocess.check_output(["ip", "addr", "show"] + ([] if device is None else ["dev", device]))
         for line in out.decode('utf-8').split('\n'):
             m = re.search('inet6 ([a-fA-F0-9:]+)/64 ([a-zA-Z0-9 ]*)', line)
             if m is not None:

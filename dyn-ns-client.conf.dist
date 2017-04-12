@@ -12,7 +12,7 @@ password = some_secure_password
 # web: Call a website to detect the current, external IPv4 address.
 method = web
 
-# The server to query for web-based IPv4 detection (if enabled).
+# The server to query for web-based IPv4 detection (method = web).
 # Default: same as the global server in the default section.
 # This server should NOT have an AAAA record, or it may return the IPv6 address instead!
 server = ipv4.ns.example.com
@@ -25,8 +25,11 @@ server = ipv4.ns.example.com
 # local: Try to detect the global IPv6 address based on the configuration of the local network interfaces.
 method = none
 
-# The server to query for web-based IPv6 detection.
+# The server to query for web-based IPv6 detection (method = web).
 # Default: same as the global server in the default section.
 # This server should NOT have an A record, or it may return the IPv4 address instead!
 server = ipv6.ns.example.com
 
+# The network device of which to use the IPv6 address for local detection (method = local).
+# If left unset, pick any device.
+device = eth0
