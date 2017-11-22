@@ -51,9 +51,9 @@ def getConfigDir():
 
 def urlopen(url, config):
     if sys.version_info >= (3, 4, 3):
-        return urllib.request.urlopen(url, context=sslContext(config)).read().decode('utf-8').strip()
+        return urllib.request.urlopen(url, context=sslContext(config)).read().decode('utf-8').strip('\n')
     else:
-        return urllib.request.urlopen(url).read().decode('utf-8').strip()
+        return urllib.request.urlopen(url).read().decode('utf-8').strip('\n')
 
 def getMyIP(family, config, methods = {}, verbose = 0):
     '''Returns our current IP address (<family> can be "IPv4" or "IPv6"), detected as given by the configuration.
