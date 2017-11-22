@@ -167,7 +167,7 @@ def updateDomain(server, domain, ipv4, ipv6, password, config, verbose):
     else:
         # Something went wrong
         print("Unexpected answer from server",server,"while updating",domain)
-        print(result)
+        print("Got '{}', expected '{}'".format(result, expected))
         return False
 
 if __name__ == "__main__":
