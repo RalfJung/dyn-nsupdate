@@ -57,9 +57,9 @@ if p.returncode or stderr or stdout:
     if stdout: print stdout
     if stderr: print stderr
 else:
-    print "good",
+    print "good"
     if ip is not None:
-        print ip,
+        print " "+ip
     if ipv6 is not None:
-        print ipv6,
+        print " "+ipv6
     print
