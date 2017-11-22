@@ -143,6 +143,8 @@ def updateDomain(server, domain, ipv4, ipv6, password, config, verbose):
     if ipv6 is not None:
         url += '&ipv6='+urllib.parse.quote(ipv6)
         expected += " "+ipv6
+    if verbose >= VERBOSE_FULL:
+        print("Request:",url)
     result = urlopen(url, config)
     
     # did everything go as planned?
