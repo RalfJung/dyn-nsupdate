@@ -24,6 +24,7 @@
 #==============================================================================
 
 import urllib.request, socket, sys, argparse, os, configparser, itertools, subprocess, re, ssl
+import dns, dns.resolver
 
 VERBOSE_CHANGE = 1
 VERBOSE_FULL   = 2
@@ -99,21 +100,20 @@ def getMyIPv6(config, verbose = 0):
         raise Exception("Unable to detect correct local IPv6 address")
     return getMyIP("IPv6", config, methods={'local': local}, verbose=verbose)
 
-def getCurIP(domain, family):
-    '''Return the current IP of the given <domain>. <family> can be socket.AF_INET or socket.AF_INET6.'''
+def getResolver(server):
+    '''Return a resovler with the given server (defined by DNS name)'''
+    addr = socket.getaddrinfo(server, None, family=socket.AF_INET)
+    addr = addr[0][4][0]
+    res = dns.resolver.Resolver()
+    res.nameservers = [addr]
+    return res
+
+def getCurIP(domain, rtype, res):
+    '''Return the current IP of the given <domain>. <rtype> can be A or AAAA.'''
     try:
-        addr = socket.getaddrinfo(domain, None, family=family)
-        return addr[0][4][0]
-    except socket.gaierror: # domain not found
+        return res.query(domain, rtype)[0].address
+    except dns.exception.DNSException: # domain not found
         return ""
-
-def getCurIPv4(domain):
-    '''Returns the current IPv4 address of the given domain'''
-    return getCurIP(domain, socket.AF_INET)
-
-def getCurIPv6(domain):
-    '''Returns the current IPv6 address of the given domain'''
-    return getCurIP(domain, socket.AF_INET6)
 
 def updateDomain(server, domain, ipv4, ipv6, password, config, verbose):
     '''Update the given domain, using the server, password. ipv4 or ipv6 can be None to not update that record, or strings with the respective addresses.
@@ -122,8 +122,11 @@ def updateDomain(server, domain, ipv4, ipv6, password, config, verbose):
     assert ipv4 is not None or ipv6 is not None
     
     # check what the domain is currently mapped to
-    curIPv4 = getCurIPv4(domain)
-    curIPv6 = getCurIPv6(domain)
+    res = getResolver(server)
+    if verbose >= VERBOSE_FULL:
+        print("Resolving names using {}".format(res.nameservers))
+    curIPv4 = getCurIP(domain, 'A', res)
+    curIPv6 = getCurIP(domain, 'AAAA', res)
     if verbose >= VERBOSE_FULL:
         print("Current status of domain {} is: IPv4 address '{}', IPv6 address '{}'".format(domain, curIPv4, curIPv6))
     
