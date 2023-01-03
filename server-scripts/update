@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # Copyright (c) 2014, Ralf Jung <post@ralfj.de>
 # All rights reserved.
 # 
@@ -26,12 +26,12 @@ import cgi, os, sys, subprocess
 form = cgi.FieldStorage(keep_blank_values=True)
 
 # print headers
-print "Content-Type: text/plain"
-print ""
+print("Content-Type: text/plain")
+print("")
 
 # get input
 if "password" not in form or "domain" not in form or ("ip" not in form and "ipv6" not in form):
-    print "Mandatory argument missing: You must supply all of 'password', 'domain' and at least either 'ip' or 'ipv6'"
+    print("Mandatory argument missing: You must supply all of 'password', 'domain' and at least either 'ip' or 'ipv6'")
     sys.exit()
 
 domain = form.getfirst("domain")
@@ -53,13 +53,13 @@ p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 # check what it did
 if p.returncode or stderr or stdout:
     # error :/
-    print "There was an error while updating the DNS: Return code %d" % p.returncode
-    if stdout: print stdout
-    if stderr: print stderr
+    print("There was an error while updating the DNS: Return code %d" % p.returncode)
+    if stdout: print(stdout)
+    if stderr: print(stderr)
 else:
     out = "good"
     if ip is not None:
         out += " "+ip
     if ipv6 is not None:
         out += " "+ipv6
-    print out
+    print(out)

@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # Copyright (c) 2014, Ralf Jung <post@ralfj.de>
 # All rights reserved.
 # 
@@ -25,8 +25,8 @@
 import os
 
 # print headers
-print "Content-Type: text/plain"
-print ""
+print("Content-Type: text/plain")
+print("")
 
 # print content
-print os.environ["REMOTE_ADDR"]
+print(os.environ["REMOTE_ADDR"])
